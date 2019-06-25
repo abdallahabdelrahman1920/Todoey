@@ -8,9 +8,11 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
 
-class CategoryViewController: UITableViewController {
+
+class CategoryViewController: SwipeTableViewController {
 
     let realm = try! Realm()
     
@@ -21,6 +23,9 @@ class CategoryViewController: UITableViewController {
         super.viewDidLoad()
 
         loadCategories()
+        tableView.rowHeight = 80.0
+        tableView.separatorStyle =  .none
+        
         
     }
 
@@ -32,18 +37,36 @@ class CategoryViewController: UITableViewController {
         return categories?.count  ?? 1
     }
     
+    
+    
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-       
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
         
-//        let category = categories[indexPath.row]
-//
-//        cell.textLabel!.text = category.name
-        cell.textLabel?.text = categories?[indexPath.row].name  ?? "No Categories added yet"
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
+        if let category = categories?[indexPath.row] {
+            cell.textLabel?.text = category.name
+            
+            guard let cateogryColor = UIColor(hexString: category.color) else {fatalError()}
+            
+            cell.backgroundColor = cateogryColor
+            
+            cell.textLabel?.textColor = ContrastColorOf(cateogryColor, returnFlat: true)
+        }
         
         return cell
     }
+    
+//    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+//
+//        let cell = super.tableView(tableView, cellForRowAt: indexPath)
+//
+//        cell.textLabel?.text = categories?[indexPath.row].name  ?? "No Categories added yet"
+//
+//        cell.backgroundColor = UIColor(hexString: (categories?[indexPath.row].color) ?? "1D9BF6")
+//
+//
+//        return cell
+//    }
     
     
     //MARK: - TableView Delegate Methods
@@ -65,6 +88,8 @@ class CategoryViewController: UITableViewController {
    
     
     
+    
+    
     //MARK: - Add New Categories
 
     
@@ -78,7 +103,7 @@ class CategoryViewController: UITableViewController {
             
             let newCategory = Category()
             newCategory.name = textField.text!
-            
+            newCategory.color = UIColor.randomFlat.hexValue()
             self.save(category: newCategory)
         }
         
@@ -123,13 +148,27 @@ class CategoryViewController: UITableViewController {
 
         tableView.reloadData()
     }
-
     
     
+    //MARK: - Delete Methods
+    
+    override func updateModel(at indexPath: IndexPath) {
+        
+        if let categoryDeletedCell = self.categories?[indexPath.row] {
+            do {
+                try self.realm.write {
+                    self.realm.delete(categoryDeletedCell)
+                }
+                
+            } catch {
+                print("Error in Deleting \(error)")
+            }
+            
+        }
+    }
     
     
-    
-    
-   
     
 }
+
+
